@@ -1,0 +1,35 @@
+{
+  "EvaluationResults": [
+    {
+      "EvalActionName": "s3:GetObject",
+      "EvalResourceName": "*",
+      "EvalDecision": "allowed",
+      "MatchedStatements": [
+        {
+          "SourcePolicyId": "PolicyInputList.2",
+          "StartPosition": {
+            "Line": 1,
+            "Column": 41
+          },
+          "EndPosition": {
+            "Line": 1,
+            "Column": 117
+          }
+        }
+      ],
+      "MissingContextValues": []
+    }
+  ],
+  "IsTruncated": false,
+  "ResponseMetadata": {
+    "RequestId": "48ae1537-6863-11e9-9b2e-ed1675d58b63",
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "x-amzn-requestid": "48ae1537-6863-11e9-9b2e-ed1675d58b63",
+      "content-type": "text/xml",
+      "content-length": "974",
+      "date": "Fri, 26 Apr 2019 20:38:44 GMT"
+    },
+    "RetryAttempts": 0
+  }
+}

@@ -1,0 +1,13 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DenyList",
+            "Effect": "Deny",
+            "Resource": "*",
+            "Action": [
+                "s3:Put*"
+            ]
+        }
+    ]
+}

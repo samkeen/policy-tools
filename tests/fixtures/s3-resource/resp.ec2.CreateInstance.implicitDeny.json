@@ -1,0 +1,23 @@
+{
+  "EvaluationResults": [
+    {
+      "EvalActionName": "ec2:CreateInstance",
+      "EvalResourceName": "*",
+      "EvalDecision": "implicitDeny",
+      "MatchedStatements": [],
+      "MissingContextValues": []
+    }
+  ],
+  "IsTruncated": false,
+  "ResponseMetadata": {
+    "RequestId": "0acdef2b-6863-11e9-9b2e-ed1675d58b63",
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "x-amzn-requestid": "0acdef2b-6863-11e9-9b2e-ed1675d58b63",
+      "content-type": "text/xml",
+      "content-length": "618",
+      "date": "Fri, 26 Apr 2019 20:36:59 GMT"
+    },
+    "RetryAttempts": 0
+  }
+}
