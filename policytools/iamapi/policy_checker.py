@@ -2,7 +2,7 @@ import json
 
 import logging
 
-from policytools.check_response import CheckResponse
+from policytools.iamapi.check_response import CheckResponse
 
 logger = logging.getLogger(__name__)
 

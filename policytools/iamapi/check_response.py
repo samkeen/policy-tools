@@ -1,6 +1,6 @@
 import logging
 
-from policytools.judged_action import JudgedAction
+from policytools.iamapi.judged_action import JudgedAction
 
 logger = logging.getLogger(__name__)
 

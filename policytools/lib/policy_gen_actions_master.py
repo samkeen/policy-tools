@@ -62,6 +62,6 @@ class PolicyGenActionsMaster(ActionsMaster):
         if resource_name.lower() not in self._resource_map:
             logger.warning(f'resource {resource_name} not known. returning empty list for all_actions_for_resource()')
             return []
-        return sorted([
+        return set(
             f'{resource_name}:{action}' for action in self._resource_map[resource_name.lower()]['Actions']
-        ])
+        )

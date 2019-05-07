@@ -10,8 +10,6 @@ class JudgedAction:
     """
 
     def __init__(self, eval_result, judging_policies):
-        self._eval_result = eval_result
-        self._judging_policies = judging_policies
         """
         {
           "EvalActionName": "s3:PutObject",
@@ -35,7 +33,9 @@ class JudgedAction:
         :param eval_result:
         :type eval_result:
         """
-        self.outcome = 'deny' if eval_result['EvalDecision'] in ['explicitDeny','implicitDeny'] else 'allow'
+        self._eval_result = eval_result
+        self._judging_policies = judging_policies
+        self.outcome = 'deny' if eval_result['EvalDecision'] in ['explicitDeny', 'implicitDeny'] else 'allow'
         self.action_name = eval_result['EvalActionName']
         self.denial_type = None
         if eval_result['EvalDecision'] == 'explicitDeny':
