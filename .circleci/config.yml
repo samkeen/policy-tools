@@ -54,7 +54,7 @@ jobs:
             py.test --cov-report=xml --cov=policytools tests/
 
       - codecov/upload:
-          file: .coverage
+          file: coverage.xml
 
 #      - store_artifacts:
 #          path: test-reports
