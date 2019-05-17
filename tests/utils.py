@@ -1,11 +1,10 @@
-import os
 import json
+import os
 
 import yaml
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 fixture_dir = f'{dir_path}/fixtures'
-
 
 
 def get_fixture(file_name):
@@ -44,6 +43,7 @@ def get_json_fixture_as_string(file_name):
     :rtype: str
     """
     return json.dumps(get_json_fixture_as_dict(file_name))
+
 
 def get_yaml_fixture(file_name):
     """

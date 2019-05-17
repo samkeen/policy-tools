@@ -1,12 +1,12 @@
 import json
 import logging
 
-from policytools.lib.actions_master import ActionsMaster
+from policytools.master_list.actions_master_list_base import ActionsMasterList
 
 logger = logging.getLogger(__name__)
 
 
-class PolicyGenActionsMaster(ActionsMaster):
+class PolicyGenActionsMasterList(ActionsMasterList):
     """
     This implementation of ActionsMaster transforms the js data file from the online
     policy generator [http://awspolicygen.s3.amazonaws.com/policygen.html] into a complete Set
@@ -28,20 +28,20 @@ class PolicyGenActionsMaster(ActionsMaster):
         :return:
         :rtype: set
         """
-        found_prefix = source_master[0:len(PolicyGenActionsMaster.MASTER_SOURCE_JS_PREFIX)]
-        if found_prefix != PolicyGenActionsMaster.MASTER_SOURCE_JS_PREFIX:
+        found_prefix = source_master[0:len(PolicyGenActionsMasterList.MASTER_SOURCE_JS_PREFIX)]
+        if found_prefix != PolicyGenActionsMasterList.MASTER_SOURCE_JS_PREFIX:
             logger.error(
-                f"Source master parse error: Expected {PolicyGenActionsMaster.MASTER_SOURCE_JS_PREFIX}, found {found_prefix}")
+                f"Source master parse error: Expected {PolicyGenActionsMasterList.MASTER_SOURCE_JS_PREFIX}, found {found_prefix}")
             raise Exception("Parse error")
         source_master_data = {}
         try:
-            source_master_data = json.loads(source_master[len(PolicyGenActionsMaster.MASTER_SOURCE_JS_PREFIX) - 1:])
+            source_master_data = json.loads(source_master[len(PolicyGenActionsMasterList.MASTER_SOURCE_JS_PREFIX) - 1:])
         except json.JSONDecodeError as err:
             logger.error(f'Error parsing JSON content of master source content\nError Message:\n{err}')
         resource_actions_list = source_master_data.get(self.SERVICE_MAP_KEYNAME)
         if resource_actions_list is None:
             raise Exception(
-                f'Did not find expected key "{PolicyGenActionsMaster.SERVICE_MAP_KEYNAME}" in master source')
+                f'Did not find expected key "{PolicyGenActionsMasterList.SERVICE_MAP_KEYNAME}" in master source')
         actions_set = set()
         for resource_name, resource_data in resource_actions_list.items():
             self._resource_map[resource_data['StringPrefix']] = resource_data
