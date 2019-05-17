@@ -1,16 +1,17 @@
 import json
 import logging
 
-from policytools.master_list.actions_master_list_base import ActionsMasterList
+from policytools.master_list.actions_master_list_base import ActionsMasterListBase
 
 logger = logging.getLogger(__name__)
 
 
-class PolicyGenActionsMasterList(ActionsMasterList):
+class PolicyGenActionsMasterList(ActionsMasterListBase):
     """
-    This implementation of ActionsMaster transforms the js data file from the online
+    This implementation of ActionsMasterListBase transforms the js data file from the online
     policy generator [http://awspolicygen.s3.amazonaws.com/policygen.html] into a complete Set
     of resource actions.
+    js is at: https://awspolicygen.s3.amazonaws.com/js/policies.js
     """
 
     def __init__(self, source_master):
@@ -22,7 +23,27 @@ class PolicyGenActionsMasterList(ActionsMasterList):
 
     def parse_actions_source(self, source_master):
         """
+        We are after the key 'serviceMap' in the returned structure
 
+        app.PolicyEditorConfig={
+          "conditionOperators": [
+            "ArnEquals",
+            "ArnEqualsIfExists",
+              ...
+          ],
+          "conditionKeys": [
+            "aws:CurrentTime",
+            "aws:EpochTime",
+              ...
+          ],
+          "serviceMap": {
+            "Amazon Comprehend": {
+              "StringPrefix": "comprehend",
+              "Actions": [
+                "BatchDetectDominantLanguage",
+                "BatchDetectEntities",
+                "BatchDetectKeyPhrases",
+                  ...
         :param source_master:
         :type source_master: str
         :return:

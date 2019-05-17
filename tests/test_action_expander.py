@@ -1,7 +1,7 @@
 import pytest
 
 from policytools.action_expander import ActionExpander
-from policytools.master_list.actions_master_list_base import ActionsMasterList
+from policytools.master_list.actions_master_list_base import ActionsMasterListBase
 from policytools.master_list.policy_gen_actions_master_list import PolicyGenActionsMasterList
 from tests.utils import get_fixture
 
@@ -10,7 +10,7 @@ from tests.utils import get_fixture
 def actions_master_list():
     """
     :return:
-    :rtype: ActionsMasterList
+    :rtype: ActionsMasterListBase
     """
     all_actions_source_data = get_fixture('policies-gen.json.js')
     return PolicyGenActionsMasterList(all_actions_source_data)

@@ -1,15 +1,13 @@
-import re
 import logging
 from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)
 
 
-class ActionsMasterList(ABC):
+class ActionsMasterListBase(ABC):
     """
-    Base class defining the strategy to transform a source document listing
-    all IAM Resource actions into a Set of those actions.
-    This complete set of actions is used for action expansions (see ActionsExpander).
+    Base class meant to hold the entire Set of IAM resource actions.
+    It is up to a concrete class to implement a source document parser (parse_actions_source)
     """
 
     def __init__(self, source_master):
@@ -57,22 +55,3 @@ class ActionsMasterList(ABC):
         """
         return self._actions_set_case_insensitive_lookup[action.lower()]
 
-    def expand(self, action):
-        """
-
-        :param action:
-        :type action: set
-        :return:
-        :rtype: set
-        """
-        if '*' not in action:
-            return {self._actions_set_case_insensitive_lookup[action.lower()]}
-        action_pattern = action.replace('*', '.*')
-        action_glob_regex = re.compile(action_pattern, re.IGNORECASE)
-        expanded = set([
-            matched_actions for matched_actions in self._actions_set if action_glob_regex.match(matched_actions)
-        ])
-        if not expanded:
-            logger.warning(f'No expansion was found for {action}.  Leaving this action unexpanded')
-            return {action}
-        return expanded
