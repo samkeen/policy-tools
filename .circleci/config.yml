@@ -23,7 +23,7 @@ jobs:
     steps:
       - checkout
       - codecov/upload:
-          file: {{ coverage_report_filepath }}
+          file: {{ .coverage }}
 
       # Download and cache dependencies
       - restore_cache:
