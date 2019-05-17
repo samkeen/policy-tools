@@ -22,9 +22,6 @@ jobs:
 
     steps:
       - checkout
-      - codecov/upload:
-          file: {{ .coverage }}
-
       # Download and cache dependencies
       - restore_cache:
           keys:
@@ -54,6 +51,9 @@ jobs:
           command: |
             . venv/bin/activate
             coverage run -m pytest
+
+      - codecov/upload:
+          file: {{ .coverage }}
 
 #      - store_artifacts:
 #          path: test-reports
