@@ -1,19 +1,9 @@
 import pytest
 
 from policytools.action_expander import ActionExpander
-from policytools.master_list.actions_master_list_base import ActionsMasterListBase
 from policytools.master_list.policy_gen_actions_master_list import PolicyGenActionsMasterList
 from policytools.policy import Policy
 from tests.utils import get_fixture
-
-
-def actions_master_list():
-    """
-    :return:
-    :rtype: ActionsMasterListBase
-    """
-    all_actions_source_data = get_fixture('policies-gen.json.js')
-    return PolicyGenActionsMasterList(all_actions_source_data)
 
 
 @pytest.fixture
@@ -22,7 +12,8 @@ def action_expander():
     :return:
     :rtype: ActionExpander
     """
-    return ActionExpander(actions_master_list())
+    all_actions_source_data = get_fixture('policies-gen.json.js')
+    return ActionExpander(PolicyGenActionsMasterList(all_actions_source_data))
 
 
 def test_allowed_actions_raw(action_expander):
