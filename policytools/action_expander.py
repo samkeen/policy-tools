@@ -15,23 +15,13 @@ class ActionExpander:
     - deny (implicit)
     """
 
-    def __init__(self, policy, actions_master_list):
+    def __init__(self, actions_master_list):
         """
 
-        :param policy:
-        :type policy: str
         :param actions_master_list:
         :type actions_master_list: ActionsMasterListBase
         """
         self._actions_master_list = actions_master_list
-
-        expanded_actions = self.expand_policy_actions(policy)
-        self.denied_actions_explicit = expanded_actions['deny']['expanded']
-        self.allowed_actions = expanded_actions['allow']['expanded'].difference(self.denied_actions_explicit)
-        self.denied_actions_implicit = actions_master_list.all_actions_set().difference(
-            self.allowed_actions).difference(self.denied_actions_explicit)
-        self.allow_actions_raw = expanded_actions['allow']['raw']
-        self.deny_actions_raw = expanded_actions['deny']['raw']
 
     def expand_policy_actions(self, policy):
         """
@@ -44,11 +34,13 @@ class ActionExpander:
         policy_actions = {
             'allow': {
                 'raw': set(),
-                'expanded': set()
+                'explicit': set()
+                # IAM logic does not support for implicit Allow
             },
             'deny': {
                 'raw': set(),
-                'expanded': set()
+                'explicit': set(),
+                'implicit': set()
             }
         }
         try:
@@ -65,8 +57,11 @@ class ActionExpander:
                 for action in list(statement['Action']):
                     policy_actions[statement_effect]['raw'] = policy_actions[statement_effect][
                         'raw'].union({action})
-                    policy_actions[statement_effect]['expanded'] = policy_actions[statement_effect][
-                        'expanded'].union(self.expand_action(action))
+                    policy_actions[statement_effect]['explicit'] = policy_actions[statement_effect][
+                        'explicit'].union(self.expand_action(action))
+        policy_actions['deny']['implicit'] = self._actions_master_list.all_actions_set().difference(
+            policy_actions['allow']['explicit']).difference(policy_actions['deny']['explicit'])
+
         return policy_actions
 
     def expand_action(self, action):

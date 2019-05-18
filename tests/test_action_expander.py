@@ -1,372 +1,58 @@
 import pytest
 
 from policytools.action_expander import ActionExpander
-from policytools.master_list.actions_master_list_base import ActionsMasterListBase
 from policytools.master_list.policy_gen_actions_master_list import PolicyGenActionsMasterList
 from tests.utils import get_fixture
 
 
 @pytest.fixture
-def actions_master_list():
+def action_expander():
     """
+
     :return:
-    :rtype: ActionsMasterListBase
+    :rtype: ActionExpander
     """
     all_actions_source_data = get_fixture('policies-gen.json.js')
-    return PolicyGenActionsMasterList(all_actions_source_data)
+    return ActionExpander(PolicyGenActionsMasterList(all_actions_source_data))
 
 
-def test_allowed_actions_raw(actions_master_list):
-    user_policy = ActionExpander("""{
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": "Allowlist1",
-                "Effect": "Allow",
-                "Resource": "*",
-                "Action": [
-                    "sts:*"
-                ]
-            },
-            {
-                "Sid": "AllowlistTestingDupeIsIgnored",
-                "Effect": "Allow",
-                "Resource": "*",
-                "Action": [
-                    "sts:*"
-                ]
-            },
-            {
-                "Sid": "Allowlist3",
-                "Effect": "Allow",
-                "Resource": "*",
-                "Action": [
-                    "s3:Get*"
-                ]
-            }
-        ]
-    }""", actions_master_list)
-    assert user_policy.allow_actions_raw == {'sts:*', 's3:Get*'}
+def test_expand_expect_no_expansion(action_expander):
+
+    expansion = action_expander.expand_action('s3:ListX*')
+    assert expansion == {'s3:ListX*'}, 'We expect no expansion since "s3:ListX*" should not match'
+    expansion = action_expander.expand_action('s3:Li*tX*')
+    assert expansion == {'s3:Li*tX*'}, 'We expect no expansion since "s3:Li*tX" should not match'
+    expansion = action_expander.expand_action('s3:*XX*')
+    assert expansion == {'s3:*XX*'}, 'We expect no expansion since "s3:*XX*" should not match'
 
 
-def test_allowed_actions_raw_case_preserve_and_insensitive(actions_master_list):
-    user_policy = ActionExpander("""{
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": "Allowlist1",
-                "Effect": "Allow",
-                "Resource": "*",
-                "Action": [
-                    "sts:*"
-                ]
-            },
-            {
-                "Sid": "AllowlistTestingDupeIsIgnored",
-                "Effect": "Allow",
-                "Resource": "*",
-                "Action": [
-                    "sts:*"
-                ]
-            },
-            {
-                "Sid": "Allowlist3",
-                "Effect": "Allow",
-                "Resource": "*",
-                "Action": [
-                    "s3:GET*"
-                ]
-            }
-        ]
-    }""", actions_master_list)
-    assert user_policy.allow_actions_raw == {'sts:*', 's3:GET*'}
+def test_expand_single_resource(action_expander):
+    expected = {'s3:ListAllMyBuckets', 's3:ListBucketMultipartUploads', 's3:ListBucket', 's3:ListBucketVersions',
+                's3:ListBucketByTags', 's3:ListMultipartUploadParts'}
+    expansion = action_expander.expand_action('s3:List*')
+    assert expansion == expected, 'We expect the expanded list of S3 "List" actions'
+    expansion = action_expander.expand_action('s3:L*st*')
+    assert expansion == expected, 'We expect the expanded list of S3 "List" actions'
 
 
-def test_allowed_actions_single_allow_stmt(actions_master_list):
-    user_policy = ActionExpander("""{
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": "Allowlist1",
-                "Effect": "Allow",
-                "Resource": "*",
-                "Action": [
-                    "sts:*"
-                ]
-            }
-        ]
-    }""", actions_master_list)
-    assert user_policy.allowed_actions == {
-        # full list of sts actions
-        'sts:GetCallerIdentity',
-        'sts:GetFederationToken',
-        'sts:DecodeAuthorizationMessage',
-        'sts:AssumeRoleWithSAML',
-        'sts:AssumeRole',
-        'sts:AssumeRoleWithWebIdentity'
-    }
+def test_expand_single_resource_case_insensitive(action_expander):
+    expected = {'s3:ListAllMyBuckets', 's3:ListBucketMultipartUploads', 's3:ListBucket', 's3:ListBucketVersions',
+                's3:ListBucketByTags', 's3:ListMultipartUploadParts'}
+    expansion = action_expander.expand_action('S3:LIST*')
+    assert expansion == expected, 'We expect the all UPPERCASE [S3:LIST*] expanded list of S3 "List" actions'
+    expansion = action_expander.expand_action('S3:LiSt*')
+    assert expansion == expected, 'We expect the mixed case [S3:LiSt*] expanded list of S3 "List" actions'
+    expansion = action_expander.expand_action('s3:list*')
+    assert expansion == expected, 'We expect the all lowercase [s3:list*] expanded list of S3 "List" actions'
 
 
-def test_allowed_actions_allow_with_explict_deny(actions_master_list):
-    user_policy = ActionExpander("""{
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": "Allow1",
-                "Effect": "Allow",
-                "Resource": "*",
-                "Action": [
-                    "sts:*"
-                ]
-            },
-            {
-                "Sid": "Deny1",
-                "Effect": "Deny",
-                "Resource": "*",
-                "Action": [
-                    "sts:Assume*"
-                ]
-            }
-        ]
-    }""", actions_master_list)
-    assert user_policy.allowed_actions == {
-        # full list of sts actions
-        'sts:GetCallerIdentity',
-        'sts:GetFederationToken',
-        'sts:DecodeAuthorizationMessage'
-    }
-
-
-def test_deny_actions_raw(actions_master_list):
-    user_policy = ActionExpander("""{
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": "Allow1",
-                "Effect": "Allow",
-                "Resource": "*",
-                "Action": [
-                    "sts:*"
-                ]
-            },
-            {
-                "Sid": "Deny1",
-                "Effect": "Deny",
-                "Resource": "*",
-                "Action": [
-                    "sts:Assume*"
-                ]
-            }
-        ]
-    }""", actions_master_list)
-    assert user_policy.deny_actions_raw == {'sts:Assume*'}, \
-        'We expect the deny actions returned unaltered'
-
-
-def test_deny_actions_raw_case_preserved(actions_master_list):
-    user_policy = ActionExpander("""{
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": "Allow1",
-                "Effect": "Allow",
-                "Resource": "*",
-                "Action": [
-                    "sts:*"
-                ]
-            },
-            {
-                "Sid": "Deny1",
-                "Effect": "Deny",
-                "Resource": "*",
-                "Action": [
-                    "sts:ASSUME*"
-                ]
-            }
-        ]
-    }""", actions_master_list)
-    assert user_policy.deny_actions_raw == {'sts:ASSUME*'}, \
-        'We expect the deny actions returned unaltered and the case to be preserved'
-
-
-def test_denied_actions_explicit(actions_master_list):
-    user_policy = ActionExpander("""{
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": "Allow1",
-                "Effect": "Allow",
-                "Resource": "*",
-                "Action": [
-                    "sts:*"
-                ]
-            },
-            {
-                "Sid": "Deny1",
-                "Effect": "Deny",
-                "Resource": "*",
-                "Action": [
-                    "sts:Assume*"
-                ]
-            }
-        ]
-    }""", actions_master_list)
-    assert user_policy.denied_actions_explicit == {
-        'sts:AssumeRole',
-        'sts:AssumeRoleWithWebIdentity',
-        'sts:AssumeRoleWithSAML'
-    }, 'We expect the deny actions returned unaltered and the case to be preserved'
-
-
-def test_denied_actions_explicit_case_insensitive(actions_master_list):
-    user_policy = ActionExpander("""{
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": "Allow1",
-                "Effect": "Allow",
-                "Resource": "*",
-                "Action": [
-                    "sts:*"
-                ]
-            },
-            {
-                "Sid": "Deny1",
-                "Effect": "Deny",
-                "Resource": "*",
-                "Action": [
-                    "sts:ASSUME*"
-                ]
-            }
-        ]
-    }""", actions_master_list)
-    assert user_policy.denied_actions_explicit == {
-        'sts:AssumeRole',
-        'sts:AssumeRoleWithWebIdentity',
-        'sts:AssumeRoleWithSAML'
-    }, 'We expect the deny actions to be accurate when using ASSUME*'
-
-
-def test_denied_actions_explicit_multiple_statements(actions_master_list):
-    expanded_actions = ActionExpander("""{
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": "AllowSts",
-                "Effect": "Allow",
-                "Resource": "*",
-                "Action": [
-                    "sts:*"
-                ]
-            },
-            {
-                "Sid": "AllowStsTestingDupeIsIgnored",
-                "Effect": "Allow",
-                "Resource": "*",
-                "Action": [
-                    "sts:*"
-                ]
-            },
-            {
-                "Sid": "AllowS3Get",
-                "Effect": "Allow",
-                "Resource": "*",
-                "Action": [
-                    "s3:Get*"
-                ]
-            },
-            {
-                "Sid": "DenyStsAssume",
-                "Effect": "Deny",
-                "Resource": "*",
-                "Action": [
-                    "sts:Assume*"
-                ]
-            }
-        ]
-    }""", actions_master_list)
-    assert expanded_actions.allowed_actions == {
-        's3:GetAccountPublicAccessBlock',
-        's3:GetAccelerateConfiguration',
-        's3:GetAnalyticsConfiguration',
-        's3:GetBucketAcl',
-        's3:GetBucketCORS',
-        's3:GetBucketLocation',
-        's3:GetBucketLogging',
-        's3:GetBucketNotification',
-        's3:GetBucketPolicy',
-        's3:GetBucketPolicyStatus',
-        's3:GetBucketPublicAccessBlock',
-        's3:GetBucketRequestPayment',
-        's3:GetBucketTagging',
-        's3:GetBucketVersioning',
-        's3:GetBucketWebsite',
-        's3:GetEncryptionConfiguration',
-        's3:GetInventoryConfiguration',
-        's3:GetLifecycleConfiguration',
-        's3:GetMetricsConfiguration',
-        's3:GetObject',
-        's3:GetObjectAcl',
-        's3:GetObjectTagging',
-        's3:GetObjectTorrent',
-        's3:GetObjectVersion',
-        's3:GetObjectVersionAcl',
-        's3:GetObjectVersionForReplication',
-        's3:GetObjectVersionTagging',
-        's3:GetObjectVersionTorrent',
-        's3:GetReplicationConfiguration',
-        'sts:DecodeAuthorizationMessage',
-        'sts:GetCallerIdentity',
-        'sts:GetFederationToken'
-    }
-    assert expanded_actions.denied_actions_explicit == {
-        'sts:AssumeRole',
-        'sts:AssumeRoleWithSAML',
-        'sts:AssumeRoleWithWebIdentity'
-    }
-# def test_scenario_1(actions_master_list):
-#     user_policy = UserPolicy("""{
-#         "Version": "2012-10-17",
-#         "Statement": [
-#             {
-#                 "Sid": "AllowSts",
-#                 "Effect": "Allow",
-#                 "Resource": "*",
-#                 "Action": [
-#                     "sts:*"
-#                 ]
-#             },
-#             {
-#                 "Sid": "AllowS3",
-#                 "Effect": "Deny",
-#                 "Resource": "*",
-#                 "Action": [
-#                     "s3:*"
-#                 ]
-#             }
-#         ]
-#     }""", actions_master_list)
-#     # this policy allows the Read permissions of S3.
-#     # sts is implicitly denies as it is not listed in this SCP policy
-#     scp_policy = UserPolicy("""{
-#             "Version": "2012-10-17",
-#             "Statement": [
-#                 {
-#                     "Sid": "AllowS3",
-#                     "Effect": "Deny",
-#                     "Resource": "*",
-#                     "Action": [
-#                         "s3:Get*",
-#                         "s3:List*",
-#                         "s3:Describe*",
-#                     ]
-#                 }
-#             ]
-#         }""", actions_master_list)
-#     result = scp_policy.effect_on(user_policy)
-#
-#     assert result.denied_actions == {
-#         'sts:',
-#         '',
-#         ''
-#     }
+def test_expand_multi_splat(action_expander):
+    expected = {'s3:ListAllMyBuckets'}
+    expansion = action_expander.expand_action('s3:List*My*')
+    assert expansion == expected, 'We expect "s3:ListAllMyBuckets" to be matched by "s3:List*My*"'
+    expansion = action_expander.expand_action('s3:*All*Buckets')
+    assert expansion == expected, 'We expect "s3:ListAllMyBuckets" to be matched by "s3:*All*Buckets"'
+    expansion = action_expander.expand_action('s3:L*tAllMyBu*ets')
+    assert expansion == expected, 'We expect "s3:ListAllMyBuckets" to be matched by "s3:L*tAllMyBu*ets"'
+    expansion = action_expander.expand_action('s3:*AllMy*X')
+    assert expansion == {'s3:*AllMy*X'}, 'We do NOT expect "s3:ListAllMyBuckets" to be matched by "s3:*AllMy*X"'
