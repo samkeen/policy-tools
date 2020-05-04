@@ -49,14 +49,14 @@ class PolicyGenActionsMasterList(ActionsMasterListBase):
         :return:
         :rtype: set
         """
-        found_prefix = source_master[0:len(PolicyGenActionsMasterList.MASTER_SOURCE_JS_PREFIX)]
-        if found_prefix != PolicyGenActionsMasterList.MASTER_SOURCE_JS_PREFIX:
+        start_of_json_index = source_master.find('{')
+        if start_of_json_index == -1:
             logger.error(
-                f"Source master parse error: Expected {PolicyGenActionsMasterList.MASTER_SOURCE_JS_PREFIX}, found {found_prefix}")
+                "Source master parse error: did not find opening curly brace: '{'")
             raise Exception("Parse error")
         source_master_data = {}
         try:
-            source_master_data = json.loads(source_master[len(PolicyGenActionsMasterList.MASTER_SOURCE_JS_PREFIX) - 1:])
+            source_master_data = json.loads(source_master[start_of_json_index:])
         except json.JSONDecodeError as err:
             logger.error(f'Error parsing JSON content of master source content\nError Message:\n{err}')
         resource_actions_list = source_master_data.get(self.SERVICE_MAP_KEYNAME)

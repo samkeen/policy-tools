@@ -53,5 +53,5 @@ class ActionsMasterListBase(ABC):
         :return:
         :rtype: str
         """
-        return self._actions_set_case_insensitive_lookup[action.lower()]
+        return self._actions_set_case_insensitive_lookup.get(action.lower())
 

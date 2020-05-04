@@ -8,9 +8,16 @@
 
 ## Summary
 
-This is a utility to programmatically determine the effect of an AWS Organizations 
+This is a utility of helper tools for working with AWS IAM Policies.
+
+Currently it programmatically determine the effect of an AWS Organizations 
 [Service Control Policy](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scp.html) 
 on a given user policy.
+
+```python
+result = scp.effect_on(user_policy)
+print result.denied_actions
+```
 
 ## Usage
 

@@ -19,11 +19,11 @@ def action_expander():
 def test_expand_expect_no_expansion(action_expander):
 
     expansion = action_expander.expand_action('s3:ListX*')
-    assert expansion == {'s3:ListX*'}, 'We expect no expansion since "s3:ListX*" should not match'
+    assert expansion == set(), 'We expect no expansion since "s3:ListX*" should not match'
     expansion = action_expander.expand_action('s3:Li*tX*')
-    assert expansion == {'s3:Li*tX*'}, 'We expect no expansion since "s3:Li*tX" should not match'
+    assert expansion == set(), 'We expect no expansion since "s3:Li*tX" should not match'
     expansion = action_expander.expand_action('s3:*XX*')
-    assert expansion == {'s3:*XX*'}, 'We expect no expansion since "s3:*XX*" should not match'
+    assert expansion == set(), 'We expect no expansion since "s3:*XX*" should not match'
 
 
 def test_expand_single_resource(action_expander):
@@ -55,4 +55,10 @@ def test_expand_multi_splat(action_expander):
     expansion = action_expander.expand_action('s3:L*tAllMyBu*ets')
     assert expansion == expected, 'We expect "s3:ListAllMyBuckets" to be matched by "s3:L*tAllMyBu*ets"'
     expansion = action_expander.expand_action('s3:*AllMy*X')
-    assert expansion == {'s3:*AllMy*X'}, 'We do NOT expect "s3:ListAllMyBuckets" to be matched by "s3:*AllMy*X"'
+    assert expansion == set(), 'We do NOT expect "s3:ListAllMyBuckets" to be matched by "s3:*AllMy*X"'
+
+def test_expand_single_no_glob_action(action_expander):
+    expansion = action_expander.expand_action('s3:ListNotAnAction')
+    assert expansion == set(), 'We expect no mathch on "s3:ListNotAnAction"'
+    expansion = action_expander.expand_action('s3:CreateBucket')
+    assert expansion == {'s3:CreateBucket'}, 'We expect mathch on "s3:CreateBucket" to be 1 item set'

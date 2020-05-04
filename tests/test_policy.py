@@ -24,9 +24,7 @@ def test_allowed_actions_raw(action_expander):
                 "Sid": "Allowlist1",
                 "Effect": "Allow",
                 "Resource": "*",
-                "Action": [
-                    "sts:*"
-                ]
+                "Action": "sts:*"
             },
             {
                 "Sid": "AllowlistTestingDupeIsIgnored",
@@ -131,9 +129,12 @@ def test_allowed_actions_allow_with_explict_deny(action_expander):
     }""", action_expander)
     assert user_policy.allowed_actions == {
         # full list of sts actions
+        'sts:AssumeRole',
+        'sts:AssumeRoleWithSAML',
+        'sts:AssumeRoleWithWebIdentity',
+        'sts:DecodeAuthorizationMessage',
         'sts:GetCallerIdentity',
-        'sts:GetFederationToken',
-        'sts:DecodeAuthorizationMessage'
+        'sts:GetFederationToken'
     }
 
 
@@ -286,8 +287,8 @@ def test_denied_actions_explicit_multiple_statements(action_expander):
         ]
     }""", action_expander)
     assert expanded_actions.allowed_actions == {
-        's3:GetAccountPublicAccessBlock',
         's3:GetAccelerateConfiguration',
+        's3:GetAccountPublicAccessBlock',
         's3:GetAnalyticsConfiguration',
         's3:GetBucketAcl',
         's3:GetBucketCORS',
@@ -315,6 +316,9 @@ def test_denied_actions_explicit_multiple_statements(action_expander):
         's3:GetObjectVersionTagging',
         's3:GetObjectVersionTorrent',
         's3:GetReplicationConfiguration',
+        'sts:AssumeRole',
+        'sts:AssumeRoleWithSAML',
+        'sts:AssumeRoleWithWebIdentity',
         'sts:DecodeAuthorizationMessage',
         'sts:GetCallerIdentity',
         'sts:GetFederationToken'

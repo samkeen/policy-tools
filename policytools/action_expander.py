@@ -23,13 +23,10 @@ class ActionExpander:
         """
         self._actions_master_list = actions_master_list
 
-    def expand_policy_actions(self, policy):
+    def expand_policy_actions(self, policy: str):
         """
 
         :param policy: IAM policy as JSON string
-        :type policy: str
-        :return:
-        :rtype: dict
         """
         policy_actions = {
             'allow': {
@@ -41,6 +38,9 @@ class ActionExpander:
                 'raw': set(),
                 'explicit': set(),
                 'implicit': set()
+            },
+            'unrecognized': {
+                'raw': set()
             }
         }
         try:
@@ -54,11 +54,17 @@ class ActionExpander:
             if statement_effect not in ['allow', 'deny']:
                 logger.error(f'Unknown statement Effect; "{statement_effect}". Ignoring statement: {statement}')
             else:
-                for action in list(statement['Action']):
-                    policy_actions[statement_effect]['raw'] = policy_actions[statement_effect][
-                        'raw'].union({action})
-                    policy_actions[statement_effect]['explicit'] = policy_actions[statement_effect][
-                        'explicit'].union(self.expand_action(action))
+                # ensure we have a list
+                actions = [statement['Action']] if isinstance(statement['Action'], str) else statement['Action']
+                for action in actions:
+                    # add this raw statement to our already 'seen' list
+                    policy_actions[statement_effect]['raw'] = policy_actions[statement_effect]['raw'].union({action})
+                    expanded_action_set = self.expand_action(action)
+                    if not expanded_action_set:
+                        policy_actions['unrecognized']['raw'].add(action)
+                    else:
+                        matched_actions = policy_actions[statement_effect]['explicit'].union(expanded_action_set)
+                        policy_actions[statement_effect]['explicit'] = matched_actions
         policy_actions['deny']['implicit'] = self._actions_master_list.all_actions_set().difference(
             policy_actions['allow']['explicit']).difference(policy_actions['deny']['explicit'])
 
@@ -73,7 +79,12 @@ class ActionExpander:
         :rtype: set
         """
         if '*' not in action:
-            return {self._actions_master_list.lookup_action(action)}
+
+            action_lookup = self._actions_master_list.lookup_action(action)
+            if not action_lookup:
+                return set()
+            else:
+                return {action_lookup}
         action_pattern = action.replace('*', '.*')
         action_glob_regex = re.compile(action_pattern, re.IGNORECASE)
         expanded = set([
@@ -82,5 +93,5 @@ class ActionExpander:
         ])
         if not expanded:
             logger.warning(f'No expansion was found for {action}.  Leaving this action unexpanded')
-            return {action}
+            return set()
         return expanded
