@@ -1,0 +1,3 @@
+include README.md LICENSE.txt
+recursive-include policytools/data *
+recursive-exclude tests *

@@ -1,8 +1,10 @@
 /.idea/
-/venv/
+/.venv/
 .pytest_cache/
 __pycache__
 .coverage
 htmlcov/
 /dist/
 /MANIFEST
+/build/
+*.egg-info
