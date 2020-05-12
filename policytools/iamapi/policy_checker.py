@@ -30,8 +30,8 @@ class PolicyChecker:
             }
         )
 
-    @staticmethod
-    def parse_policy(policy_string):
+    @classmethod
+    def parse_policy(cls, policy_string):
         try:
             policy_data = json.loads(policy_string)
         except json.JSONDecodeError as err:
@@ -49,6 +49,14 @@ class PolicyChecker:
         """
         response = self.call_simulate_iam_policy(self._policies_list, actions_list)
         return CheckResponse(response, self._policies_list)
+
+    def get_context_keys_for_policy(self):
+        policies_list = [json.dumps(policy['policy_dict']) for policy in self._policies_list]
+        response = self._aws_client.get_context_keys_for_custom_policy(
+            PolicyInputList=policies_list
+        )
+        return response
+
 
     def call_simulate_iam_policy(self, policy_input_list, action_names):
         """
