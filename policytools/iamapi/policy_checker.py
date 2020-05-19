@@ -1,5 +1,4 @@
 import json
-
 import logging
 
 from policytools.iamapi.check_response import CheckResponse
@@ -47,7 +46,23 @@ class PolicyChecker:
         :return:
         :rtype:
         """
+        max_pagination_tries = 12  # don't dos service if we have a bug
+        # make first api call to build the response object
         response = self.call_simulate_iam_policy(self._policies_list, actions_list)
+        truncated = response['IsTruncated']
+        marker = response.get('Marker', None)
+        if truncated:
+            page_call_count = 0
+            # now loop calls, adding to the initial response.EvaluationResults
+            while truncated and page_call_count <= max_pagination_tries:
+                page_call_count += 1
+                page_response = self.call_simulate_iam_policy(self._policies_list, actions_list, marker)
+                response['EvaluationResults'] = response['EvaluationResults'] + page_response['EvaluationResults']
+                truncated = page_response['IsTruncated']
+                marker = page_response.get('Marker', None)
+                if truncated and page_call_count == max_pagination_tries:
+                    raise RuntimeError(f'Made max [{page_call_count}] allowed calls to simulate_custom_policy'
+                                       f'exiting so we don\'t dos the service')
         return CheckResponse(response, self._policies_list)
 
     def get_context_keys_for_policy(self):
@@ -57,8 +72,7 @@ class PolicyChecker:
         )
         return response
 
-
-    def call_simulate_iam_policy(self, policy_input_list, action_names):
+    def call_simulate_iam_policy(self, policy_input_list, action_names, marker: str = ''):
         """
 
         :param policy_input_list:
@@ -67,11 +81,9 @@ class PolicyChecker:
         :type action_names: list
         :return:
         :rtype: dict
-        """
-        response = self._aws_client.simulate_custom_policy(
-            # grab the policies as strings
-            PolicyInputList=[json.dumps(policy['policy_dict']) for policy in policy_input_list],
-            ActionNames=action_names
+        # PolicyInputList=[],
+            # ActionNames=[],
+            # Marker=string
             # ResourceArns=[
             #     'string',
             # ],
@@ -89,6 +101,12 @@ class PolicyChecker:
             # ],
             # ResourceHandlingOption='string',
             # MaxItems=123,
-            # Marker='string'
-        )
+        """
+        call_options = {
+            'PolicyInputList': [json.dumps(policy['policy_dict']) for policy in policy_input_list],
+            'ActionNames': action_names
+        }
+        if marker:
+            call_options['Marker'] = marker
+        response = self._aws_client.simulate_custom_policy(**call_options)
         return response

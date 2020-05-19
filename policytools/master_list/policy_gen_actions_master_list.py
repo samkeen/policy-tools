@@ -78,7 +78,7 @@ class PolicyGenActionsMasterList(ActionsMasterListBase):
         :param resource_name:
         :type resource_name: str
         :return:
-        :rtype: list
+        :rtype: set
         """
         if resource_name.lower() not in self._resource_map:
             logger.warning(f'resource {resource_name} not known. returning empty list for all_actions_for_resource()')

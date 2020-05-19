@@ -4,6 +4,7 @@ from policytools.iamapi.judged_action import JudgedAction
 
 logger = logging.getLogger(__name__)
 
+
 class CheckResponse:
 
     def __init__(self, policy_check_response, policy_list):
@@ -92,6 +93,9 @@ class CheckResponse:
 
     def allowed_actions(self):
         return self._allowed_actions
+
+    def allowed_actions_as_str(self):
+        return [str(a) for a in self._allowed_actions]
 
     def denied_actions_all(self):
         return self._denied_actions_all
