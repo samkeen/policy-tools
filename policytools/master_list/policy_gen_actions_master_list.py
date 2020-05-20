@@ -13,6 +13,9 @@ class PolicyGenActionsMasterList(ActionsMasterListBase):
     of resource actions.
     js is at: https://awspolicygen.s3.amazonaws.com/js/policies.js
     """
+    MASTER_SOURCE_JS_PREFIX = 'app.PolicyEditorConfig={'
+    SERVICE_MAP_KEYNAME = 'serviceMap'
+    source_master_json_dict = {}
 
     def __init__(self, source_master):
         self._resource_map = {}
@@ -56,10 +59,10 @@ class PolicyGenActionsMasterList(ActionsMasterListBase):
             raise Exception("Parse error")
         source_master_data = {}
         try:
-            source_master_data = json.loads(source_master[start_of_json_index:])
+            self.source_master_json_dict = json.loads(source_master[start_of_json_index:])
         except json.JSONDecodeError as err:
             logger.error(f'Error parsing JSON content of master source content\nError Message:\n{err}')
-        resource_actions_list = source_master_data.get(self.SERVICE_MAP_KEYNAME)
+        resource_actions_list = self.source_master_json_dict.get(self.SERVICE_MAP_KEYNAME)
         if resource_actions_list is None:
             raise Exception(
                 f'Did not find expected key "{PolicyGenActionsMasterList.SERVICE_MAP_KEYNAME}" in master source')
