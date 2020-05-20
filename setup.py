@@ -28,7 +28,13 @@ setup(
     url='https://github.com/samkeen/policy-tools',
     packages=find_packages(),
     install_requires=[
-        'pyyaml'
+        'pyyaml',
+        'boto3'
+    ],
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: Apache Software License",
+        "Operating System :: OS Independent",
     ],
     include_package_data=True,
 

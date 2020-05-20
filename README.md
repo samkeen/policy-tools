@@ -112,3 +112,41 @@ print result.denied_actions
   }
  
 ```
+ # Developing
+ 
+ **create file ~/.pypirc** (if you do not already have)
+```
+[distutils]
+index-servers =
+  pypi
+  pypitest
+
+[pypi]
+repository: https://upload.pypi.org/legacy/
+username:
+password:
+
+[pypitest]
+repository: https://test.pypi.org/legacy/
+username:
+password:
+```
+
+**build**
+```
+# tick to semver `version` in setup.py
+rm -rf dist
+python setup.py bdist_wheel --universal
+```
+
+**pypitest**
+```
+twine upload --repository pypitest dist/*
+pip install policytools --index-url https://test.pypi.org/simple/ --upgrade
+```
+
+**pypi**
+```
+twine upload --repository pypi dist/*
+pip install policytools --upgrade
+```
