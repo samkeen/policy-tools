@@ -1,9 +1,9 @@
 from typing import Set
+
 from policytools.action_expander import ActionExpander
 
 
 class Policy:
-
     denied_actions_explicit: Set[str]
     denied_actions_implicit: Set[str]
     allowed_actions: Set[str]
@@ -31,3 +31,9 @@ class Policy:
         self.allow_actions_raw = expanded_actions['allow']['raw']
         self.deny_actions_raw = expanded_actions['deny']['raw']
         self.unrecognized_actions = expanded_actions['unrecognized']['raw']
+
+    def get_reconciled_allowed_actions(self) -> Set:
+        """
+        return the allows with denied taken out
+        """
+        return self.allowed_actions.difference(self.denied_actions_implicit.union(self.denied_actions_explicit))

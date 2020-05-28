@@ -21,9 +21,6 @@ class PolicyGenActionsMasterList(ActionsMasterListBase):
         self._resource_map = {}
         super().__init__(source_master)
 
-    MASTER_SOURCE_JS_PREFIX = 'app.PolicyEditorConfig={'
-    SERVICE_MAP_KEYNAME = 'serviceMap'
-
     def parse_actions_source(self, source_master):
         """
         We are after the key 'serviceMap' in the returned structure

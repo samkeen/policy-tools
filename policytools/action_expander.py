@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+from typing import List, Type, Dict, Any, Set
 
 from policytools.master_list.actions_master_list_base import ActionsMasterListBase
 
@@ -14,14 +15,19 @@ class ActionExpander:
     - deny (explicit)
     - deny (implicit)
     """
+    _actions_master_list: Type[ActionsMasterListBase]
+    _filter_conditional_denials: bool
+    _processed_conditional_deny_statements: List = []
+    # these are tracked separately.  _filter_conditional_denials determines if they are included in
+    # the denials returned from expand_policy_actions()
+    _conditional_deny_actions: Set = set()
 
-    def __init__(self, actions_master_list):
+    def __init__(self, actions_master_list: Type[ActionsMasterListBase], filter_conditional_denials=False):
         """
 
-        :param actions_master_list:
-        :type actions_master_list: ActionsMasterListBase
         """
         self._actions_master_list = actions_master_list
+        self._filter_conditional_denials = filter_conditional_denials
 
     def expand_policy_actions(self, policy: str):
         """
@@ -53,18 +59,26 @@ class ActionExpander:
             statement_effect = statement['Effect'].lower()
             if statement_effect not in ['allow', 'deny']:
                 logger.error(f'Unknown statement Effect; "{statement_effect}". Ignoring statement: {statement}')
-            else:
-                # ensure we have a list
-                actions = [statement['Action']] if isinstance(statement['Action'], str) else statement['Action']
-                for action in actions:
-                    # add this raw statement to our already 'seen' list
-                    policy_actions[statement_effect]['raw'] = policy_actions[statement_effect]['raw'].union({action})
-                    expanded_action_set = self.expand_action(action)
-                    if not expanded_action_set:
-                        policy_actions['unrecognized']['raw'].add(action)
-                    else:
-                        matched_actions = policy_actions[statement_effect]['explicit'].union(expanded_action_set)
+                continue
+            is_conditional = self._record_conditional_denial(statement)
+            if is_conditional and self._filter_conditional_denials:
+                logger.info(f'Filtering conditional denial statement: "{statement}"')
+            # ensure we have a list
+            actions = [statement['Action']] if isinstance(statement['Action'], str) else statement['Action']
+            for action in actions:
+                # add this raw statement to our already 'seen' list
+                policy_actions[statement_effect]['raw'] = policy_actions[statement_effect]['raw'].union({action})
+                expanded_action_set = self.expand_action(action)
+                if not expanded_action_set:
+                    policy_actions['unrecognized']['raw'].add(action)
+                else:
+                    matched_actions = policy_actions[statement_effect]['explicit'].union(expanded_action_set)
+                    if is_conditional:
+                        self._conditional_deny_actions = matched_actions
+                    if not is_conditional or not self._filter_conditional_denials:
+                        logger.info(f'Filtering conditional denial actions: "{matched_actions}"')
                         policy_actions[statement_effect]['explicit'] = matched_actions
+
         policy_actions['deny']['implicit'] = self._actions_master_list.all_actions_set().difference(
             policy_actions['allow']['explicit']).difference(policy_actions['deny']['explicit'])
 
@@ -95,3 +109,21 @@ class ActionExpander:
             logger.warning(f'No expansion was found for {action}.  Leaving this action unexpanded')
             return set()
         return expanded
+
+    def _is_conditional_denial(self, statement: Dict[str, Any]):
+        statement = {k.lower(): v for k, v in statement.items()}
+        is_conditional_denial = False
+        if statement['effect'].lower() == 'deny':
+            is_conditional_denial = statement['resource'] != '*' or statement.get('condition', False)
+        return is_conditional_denial
+
+    def _record_conditional_denial(self, statement: Dict[str, Any]):
+        recorded = False
+        if self._is_conditional_denial(statement):
+            self._processed_conditional_deny_statements.append(statement)
+            recorded = True
+        return recorded
+
+    @property
+    def conditional_denied_actions(self):
+        return self._conditional_deny_actions
