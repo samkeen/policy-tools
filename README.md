@@ -133,8 +133,9 @@ password:
 ```
 
 **build**
+
+Update the version in `policytools/version.txt`
 ```
-# tick to semver `version` in setup.py
 rm -rf dist
 python setup.py bdist_wheel --universal
 ```
