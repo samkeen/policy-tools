@@ -1,6 +1,8 @@
-from dataclasses import dataclass
+from typing import Set
 
 
-@dataclass
 class PolicyScpJudgment:
-    denied_actions: set
+    denied_actions: Set[str]
+
+    def __init__(self, denied_actions: Set[str]):
+        self.denied_actions = denied_actions
